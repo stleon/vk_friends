@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Social Graph</title>
+<style>
+
+.link {
+  fill: none;
+  stroke: #bbb;
+}
+
+.node text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+</style>
+</head>>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+
+var width = 2500,
+    height = 2000;
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .linkDistance(10)
+    .linkStrength(1)
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("miserables.json", function(error, graph) {
+  var nodes = graph.nodes.slice(),
+      links = [],
+      bilinks = [];
+
+  graph.links.forEach(function(link) {
+    var s = nodes[link.source],
+        t = nodes[link.target],
+        i = {}; // intermediate node
+    nodes.push(i);
+    links.push({source: s, target: i}, {source: i, target: t});
+    bilinks.push([s, i, t]);
+  });
+
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(bilinks)
+    .enter().append("path")
+      .attr("class", "link");
+
+  var node = svg.selectAll(".node")
+      .data(graph.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .call(force.drag);
+
+  node.append("image")
+      .attr("xlink:href",function(d) {return d.photo;})
+      .attr("x", -8)
+      .attr("y", -8)
+      .attr("width", 16)
+      .attr("height", 16);
+/*
+  node.append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name });
+*/
+   node.append("title")
+      .text(function(d) { return d.name; });
+  force.on("tick", function() {
+    link.attr("d", function(d) {
+      return "M" + d[0].x + "," + d[0].y
+          + "S" + d[1].x + "," + d[1].y
+          + " " + d[2].x + "," + d[2].y;
+    });
+    node.attr("transform", function(d) {
+      return "translate(" + d.x + "," + d.y + ")";
+    });
+  });
+});
+
+</script>
+</body>
+</html>
