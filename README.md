@@ -42,3 +42,4 @@ python 2d3.py
 
 * Python 3.4
 * [requests](https://github.com/kennethreitz/requests)
+* Mozilla FireFox, так как в Chrome нельзя использовать **XMLHttpRequest** для загрузки локальных файлов (никто не мешает сделать ```python -m http.server 8000```) 
