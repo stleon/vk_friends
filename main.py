@@ -23,7 +23,7 @@ class VkFriends():
 	def base_info(self, ids):
 		"""read https://vk.com/dev/users.get"""
 		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' %
-														  (','.join(map(str, ids))))).json()['response']
+									(','.join(map(str, ids))))).json()['response']
 		# Проверяем, если id из settings.py не деактивирован
 		if 'deactivated' in r[0].keys():
 			sys.exit("User deactivated")
@@ -31,7 +31,7 @@ class VkFriends():
 
 	def friends(self, id):
 		"""
-		read https://vk.com/dev/users.get
+		read https://vk.com/dev/friends.get
 		Принимает идентификатор пользователя
 		Возвращает список активных анкет с инфой
 		"""
