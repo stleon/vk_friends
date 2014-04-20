@@ -2,6 +2,13 @@ import sys
 import requests
 from settings import token, my_id, api_v
 
+class VkException(Exception):
+	def __init__(self, message):
+		self.message = message
+
+	def __str__(self):
+		return self.message
+
 
 class VkFriends():
 	"""
@@ -9,11 +16,14 @@ class VkFriends():
 	"""
 
 	def __init__(self, token, my_id, api_v):
-		self.token, self.my_id, self.api_v = token, my_id, api_v
-		my_inf = self.base_info([self.my_id,])[0]
-		self.my_name, self.my_last_name, self.photo = my_inf['first_name'], my_inf['last_name'], my_inf['photo']
-		self.all_friends = self.friends(self.my_id)
-		self.friendships = list(map(lambda x:self.common_friends(self.my_id, x), self.all_friends))
+		try:
+			self.token, self.my_id, self.api_v = token, my_id, api_v
+			my_inf = self.base_info([self.my_id,])[0]
+			self.my_name, self.my_last_name, self.photo = my_inf['first_name'], my_inf['last_name'], my_inf['photo']
+			self.all_friends = self.friends(self.my_id)
+			self.friendships = list(map(lambda x:self.common_friends(self.my_id, x), self.all_friends))
+		except VkException as error:
+			sys.exit(error)
 
 	def request_url(self, method_name, parameters):
 		"""read https://vk.com/dev/api_requests"""
@@ -22,11 +32,13 @@ class VkFriends():
 
 	def base_info(self, ids):
 		"""read https://vk.com/dev/users.get"""
-		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' %
-									(','.join(map(str, ids))))).json()['response']
+		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' % (','.join(map(str, ids))))).json()
+		if 'error' in r.keys():
+			raise VkException('Error message: %s Error code: %s' %(r['error']['error_msg'], r['error']['error_code']))
+		r = r['response']
 		# Проверяем, если id из settings.py не деактивирован
 		if 'deactivated' in r[0].keys():
-			sys.exit("User deactivated")
+			raise VkException("User deactivated")
 		return r
 
 	def friends(self, id):
@@ -49,6 +61,8 @@ class VkFriends():
 		"""
 		r = requests.get(self.request_url('friends.getMutual',
 										  'source_uid=%s&target_uid=%s' % (source, target['id']) )).json()
+		if 'error' in r.keys():
+			raise VkException('Error message: %s Error code: %s' %(r['error']['error_msg'], r['error']['error_code']))
 		print(r)
 		# return target, self.base_info(r['response']) if r['response'] else None # почувствуй разницу
 		# берем инфу из уже полного списка
