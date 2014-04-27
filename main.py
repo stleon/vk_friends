@@ -2,7 +2,6 @@ import sys
 import requests
 from settings import token, my_id, api_v
 
-
 class VkException(Exception):
 	def __init__(self, message):
 		self.message = message
@@ -29,7 +28,7 @@ class VkFriends():
 			my_inf = self.base_info([self.my_id])[0]
 			self.my_name, self.my_last_name, self.photo = my_inf['first_name'], my_inf['last_name'], my_inf['photo']
 			self.all_friends = self.friends(self.my_id)
-			self.friendships = list(map(lambda x: self.common_friends(self.my_id, x), self.all_friends))
+			self.friendships = self.common_friends()
 		except VkException as error:
 			sys.exit(error)
 
@@ -56,21 +55,32 @@ class VkFriends():
 		r = requests.get(self.request_url('friends.get',
 										  'user_id=%s&fields=uid,first_name,last_name,photo' % id)).json()['response']
 		#self.count_friends = r['count']
-		# удаляем деактивированные аккаунты
-		return list(filter((lambda x: 'deactivated' not in x.keys()), r['items']))
+		return {item['id']: item for item in r['items']}
 
-	def common_friends(self, source, target):
+	def common_friends(self):
 		"""
 		read https://vk.com/dev/friends.getMutual
-		Принимает идентификатор источника и ифну о цели
+		read https://vk.com/dev/execute
 		Возвращает в кортеже инфу о цели и список общих друзей с инфой
 		"""
-		r = self.checker(requests.get(self.request_url('friends.getMutual', 'source_uid=%s&target_uid=%s' %
-																	(source, target['id']))).json())
-		print(r)
-		# return target, self.base_info(r['response']) if r['response'] else None # почувствуй разницу
-		# берем инфу из уже полного списка
-		return target, [id for i in r['response'] for id in self.all_friends if i == id['id']] if r['response'] else None
+		def f(lst, n=25):
+			# разбиваем на 25 частей
+			return [lst[i:i + n] for i in iter(range(0, len(lst), n))]
+
+		result = []
+		for i in f(list(self.all_friends.keys())):
+			# Формируем code (параметр execute)
+			code = 'return {'
+			for id in i:
+				code = '%s%s' % (code, '"%s": API.friends.getMutual({"source_uid":%s, "target_uid":%s}),' % (id, self.my_id, id))
+			code = '%s%s' % (code, '};')
+
+			for key, val in requests.get(self.request_url('execute', 'code=%s' % code)).json()['response'].items():
+				if int(key) in list(self.all_friends.keys()):
+					# берем инфу из уже полного списка
+					result.append((self.all_friends[int(key)], [self.all_friends[int(i)] for i in val] if val else None))
+
+		return result
 
 if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
