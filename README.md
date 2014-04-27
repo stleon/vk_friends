@@ -9,7 +9,7 @@ vk_friends
 
 Чтобы его получить необходимо [сформировать](https://vk.com/dev/auth_mobile) **url**:
 ```
-https://oauth.vk.com/authorize?client_id=IDприложения&scope=friends&redirect_uri=https://oauth.vk.com/blank.html&display=page&v=5.20&response_type=token
+https://oauth.vk.com/authorize?client_id=IDприложения&scope=friends&redirect_uri=https://oauth.vk.com/blank.html&display=page&v=5.21&response_type=token
 ```
 
 Если адрес сформирован правильно, переходим по нему и получаем нечто вроде:

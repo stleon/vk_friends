@@ -2,6 +2,7 @@ import sys
 import requests
 from settings import token, my_id, api_v
 
+
 class VkException(Exception):
 	def __init__(self, message):
 		self.message = message
@@ -14,13 +15,6 @@ class VkFriends():
 	"""
 	Находит друзей, находит общих друзей
 	"""
-
-	@staticmethod
-	def checker(r):
-		if 'error' in r.keys():
-			raise VkException('Error message: %s. Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
-		else:
-			return r
 
 	def __init__(self, token, my_id, api_v):
 		try:
@@ -39,8 +33,10 @@ class VkFriends():
 
 	def base_info(self, ids):
 		"""read https://vk.com/dev/users.get"""
-		r = self.checker(requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' %
-														(','.join(map(str, ids))))).json())['response']
+		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' % (','.join(map(str, ids))))).json()
+		if 'error' in r.keys():
+			raise VkException('Error message: %s. Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
+		r = r['response']
 		# Проверяем, если id из settings.py не деактивирован
 		if 'deactivated' in r[0].keys():
 			raise VkException("User deactivated")
@@ -50,25 +46,23 @@ class VkFriends():
 		"""
 		read https://vk.com/dev/friends.get
 		Принимает идентификатор пользователя
-		Возвращает список активных анкет с инфой
 		"""
 		r = requests.get(self.request_url('friends.get',
-										  'user_id=%s&fields=uid,first_name,last_name,photo' % id)).json()['response']
+				'user_id=%s&fields=uid,first_name,last_name,photo' % id)).json()['response']
 		#self.count_friends = r['count']
 		return {item['id']: item for item in r['items']}
 
 	def common_friends(self):
 		"""
-		read https://vk.com/dev/friends.getMutual
-		read https://vk.com/dev/execute
+		read https://vk.com/dev/friends.getMutual and read https://vk.com/dev/execute
 		Возвращает в кортеже инфу о цели и список общих друзей с инфой
 		"""
-		def f(lst, n=25):
-			# разбиваем на 25 частей
+		def parts(lst, n=25):
+			""" разбиваем список на части - по 25 в каждой """
 			return [lst[i:i + n] for i in iter(range(0, len(lst), n))]
 
 		result = []
-		for i in f(list(self.all_friends.keys())):
+		for i in parts(list(self.all_friends.keys())):
 			# Формируем code (параметр execute)
 			code = 'return {'
 			for id in i:
