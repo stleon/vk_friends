@@ -32,7 +32,6 @@ class VkFriends():
 
 	def base_info(self, ids):
 		"""read https://vk.com/dev/users.get"""
-		# TODO: слишком много полей для всего сразу, город и страна не нужны для нахождения общих друзей
 		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' % (','.join(map(str, ids))))).json()
 		if 'error' in r.keys():
 			raise VkException('Error message: %s. Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
@@ -47,8 +46,9 @@ class VkFriends():
 		read https://vk.com/dev/friends.get
 		Принимает идентификатор пользователя
 		"""
+		# TODO: слишком много полей для всего сразу, город и страна не нужны для нахождения общих друзей
 		r = requests.get(self.request_url('friends.get',
-				'user_id=%s&fields=uid,first_name,last_name,photo,country,city' % id)).json()['response']
+				'user_id=%s&fields=uid,first_name,last_name,photo,country,city,sex' % id)).json()['response']
 		self.count_friends = r['count']
 		#r = list(filter((lambda x: 'deactivated' not in x.keys()), r['items']))
 		return {item['id']: item for item in r['items']}
@@ -61,7 +61,6 @@ class VkFriends():
 		def parts(lst, n=25):
 			""" разбиваем список на части - по 25 в каждой """
 			return [lst[i:i + n] for i in iter(range(0, len(lst), n))]
-
 
 		result = []
 		for i in parts(list(self.all_friends.keys())):
@@ -91,6 +90,19 @@ class VkFriends():
 				all += 1
 		return {k: (places[k], round(places[k]/all * 100, 2)) for k, v in places.items()}
 
+	def gender(self):
+		"""
+		Возвращает список, содержащий количество друзей того или иного пола. Где индекс
+		0 - пол не указан
+		1 - женский;
+		2 - мужской;
+		"""
+		genders = [0, 0, 0]
+		for i in self.all_friends.values():
+			if "sex" in i.keys():  # если пол указаны в анкете
+				genders[i["sex"]] += 1
+		return genders
+
 
 if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
@@ -98,3 +110,4 @@ if __name__ == '__main__':
 	print(a.common_friends())
 	print(a.from_where("country"))
 	print(a.from_where("city"))
+	print(a.gender())
