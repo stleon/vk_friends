@@ -76,38 +76,35 @@ class VkFriends():
 
 		return result
 
-	def from_where(self, location):
+	def from_where_gender(self):
 		"""
-		Принимает строку country/city
-		Возвращает статистику - сколько всего/в% друзей в определнной локации
+		Возвращает кортеж из 2х частей
+		0 -  сколько всего/в% друзей в определнной локации (country, city)
+		1 - список, содержащий количество друзей того или иного пола. Где индекс
+			0 - пол не указан
+			1 - женский;
+			2 - мужской;
 		"""
-		places = {}
-		all = 0
-		for i in self.all_friends.values():
-			if location in i.keys():  # если страна/город указаны в анкете
-				place = i[location]["title"]
-				places[place] = 1 if place not in places else places[place] + 1
-				all += 1
-		return {k: (places[k], round(places[k]/all * 100, 2)) for k, v in places.items()}
+		locations, all, genders = [{},{}], [0, 0], [0, 0, 0]
 
-	def gender(self):
-		"""
-		Возвращает список, содержащий количество друзей того или иного пола. Где индекс
-		0 - пол не указан
-		1 - женский;
-		2 - мужской;
-		"""
-		genders = [0, 0, 0]
+		def calculate(dct, all):
+			return {k: (dct[k], round(dct[k]/all * 100, 2)) for k, v in dct.items()}
+
+		def constr(location, dct, ind):
+			if location in dct.keys():
+				place = dct[location]["title"]
+				locations[ind][place] = 1 if place not in locations[ind] else locations[ind][place] + 1
+				all[ind] += 1
+
 		for i in self.all_friends.values():
-			if "sex" in i.keys():  # если пол указаны в анкете
+			constr("country", i, 0)
+			constr("city", i, 1)
+			if "sex" in i.keys():
 				genders[i["sex"]] += 1
-		return genders
-
+		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders
 
 if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	print(a.common_friends())
-	print(a.from_where("country"))
-	print(a.from_where("city"))
-	print(a.gender())
+	print(a.from_where_gender())
