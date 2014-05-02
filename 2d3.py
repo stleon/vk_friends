@@ -22,6 +22,7 @@ class D3(VkFriends):
 
 	def __init__(self, token, my_id, api_v):
 		VkFriends.__init__(self, token, my_id, api_v)
+		self.friendships = self.common_friends()
 		self.js = {"nodes": [], "links": []}
 		self.write_json(self.to_json())
 
