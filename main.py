@@ -48,7 +48,7 @@ class VkFriends():
 		"""
 		# TODO: слишком много полей для всего сразу, город и страна не нужны для нахождения общих друзей
 		r = requests.get(self.request_url('friends.get',
-				'user_id=%s&fields=uid,first_name,last_name,photo,country,city,sex' % id)).json()['response']
+				'user_id=%s&fields=uid,first_name,last_name,photo,country,city,sex,bdate' % id)).json()['response']
 		self.count_friends = r['count']
 		#r = list(filter((lambda x: 'deactivated' not in x.keys()), r['items']))
 		return {item['id']: item for item in r['items']}
@@ -78,14 +78,15 @@ class VkFriends():
 
 	def from_where_gender(self):
 		"""
-		Возвращает кортеж из 2х частей
+		Возвращает кортеж из 3х частей
 		0 -  сколько всего/в% друзей в определнной локации (country, city)
 		1 - список, содержащий количество друзей того или иного пола. Где индекс
 			0 - пол не указан
 			1 - женский;
 			2 - мужской;
+		2 - сколько друзей родилось в тот или иной день
 		"""
-		locations, all, genders = [{},{}], [0, 0], [0, 0, 0]
+		locations, all, genders, bdates = [{}, {}], [0, 0], [0, 0, 0], {}
 
 		def calculate(dct, all):
 			return {k: (dct[k], round(dct[k]/all * 100, 2)) for k, v in dct.items()}
@@ -101,7 +102,11 @@ class VkFriends():
 			constr("city", i, 1)
 			if "sex" in i.keys():
 				genders[i["sex"]] += 1
-		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders
+			if "bdate" in i.keys():
+				date = '.'.join(i["bdate"].split(".")[:2])
+				bdates[date] = 1 if date not in bdates else bdates[date] + 1
+
+		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders, bdates
 
 if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
