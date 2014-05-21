@@ -16,11 +16,10 @@ class VkFriends():
 	Находит друзей, находит общих друзей
 	"""
 
-	def __init__(self, token, my_id, api_v):
+	def __init__(self, *pargs):
 		try:
-			self.token, self.my_id, self.api_v = token, my_id, api_v
-			my_inf = self.base_info([self.my_id])[0]
-			self.my_name, self.my_last_name, self.photo = my_inf['first_name'], my_inf['last_name'], my_inf['photo']
+			self.token, self.my_id, self.api_v = pargs
+			self.my_name, self.my_last_name, self.photo = self.base_info([self.my_id])
 			self.all_friends = self.friends(self.my_id)
 		except VkException as error:
 			sys.exit(error)
@@ -35,11 +34,11 @@ class VkFriends():
 		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' % (','.join(map(str, ids))))).json()
 		if 'error' in r.keys():
 			raise VkException('Error message: %s. Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
-		r = r['response']
+		r = r['response'][0]
 		# Проверяем, если id из settings.py не деактивирован
-		if 'deactivated' in r[0].keys():
+		if 'deactivated' in r.keys():
 			raise VkException("User deactivated")
-		return r
+		return r['first_name'], r['last_name'], r['photo']
 
 	def friends(self, id):
 		"""
@@ -73,7 +72,6 @@ class VkFriends():
 				if int(key) in list(self.all_friends.keys()):
 					# берем инфу из уже полного списка
 					result.append((self.all_friends[int(key)], [self.all_friends[int(i)] for i in val] if val else None))
-
 		return result
 
 	def from_where_gender(self):
