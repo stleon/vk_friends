@@ -33,7 +33,7 @@ class VkFriends():
 		"""read https://vk.com/dev/users.get"""
 		r = requests.get(self.request_url('users.get', 'user_ids=%s&fields=photo' % (','.join(map(str, ids))))).json()
 		if 'error' in r.keys():
-			raise VkException('Error message: %s. Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
+			raise VkException('Error message: %s Error code: %s' % (r['error']['error_msg'], r['error']['error_code']))
 		r = r['response'][0]
 		# Проверяем, если id из settings.py не деактивирован
 		if 'deactivated' in r.keys():
@@ -62,16 +62,14 @@ class VkFriends():
 			return [lst[i:i + n] for i in iter(range(0, len(lst), n))]
 
 		result = []
+
 		for i in parts(list(self.all_friends.keys())):
-			# Формируем code (параметр execute)
-			code = 'return {'
-			for id in i:
-				code = '%s%s' % (code, '"%s": API.friends.getMutual({"source_uid":%s, "target_uid":%s}),' % (id, self.my_id, id))
-			code = '%s%s' % (code, '};')
-			for key, val in requests.get(self.request_url('execute', 'code=%s' % code)).json()['response'].items():
-				if int(key) in list(self.all_friends.keys()):
-					# берем инфу из уже полного списка
-					result.append((self.all_friends[int(key)], [self.all_friends[int(i)] for i in val] if val else None))
+			r = requests.get(self.request_url('execute.getMutual',
+							'source=%s&targets=%s' % (self.my_id, ",".join(str(id) for id in i)))).json()['response']
+
+			for x, id in enumerate(i):
+				result.append((self.all_friends[int(id)], [self.all_friends[int(i)] for i in r[x]] if r[x] else None))
+
 		return result
 
 	def from_where_gender(self):
@@ -110,4 +108,4 @@ if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	print(a.common_friends())
-	print(a.from_where_gender())
+	#print(a.from_where_gender())

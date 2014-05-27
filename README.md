@@ -18,6 +18,10 @@ https://oauth.vk.com/blank.html#access_token=ACCESS_TOKEN&expires_in=86400&user_
 ```
 
 После этого редактируем файл **settings.py**, вставляя туда полученные **access_token** и **user_id**.
+
+Далее переходим по ссылке **https://vk.com/editapp?id=IDприложения&section=functions** и создаем хранимую процедуру **getMutual**.
+Копируем содержимое **vkscript.js** в форму и сохраняем.
+
 Ура!
 
 ##Что дальше
