@@ -57,12 +57,8 @@ class VkFriends():
 		read https://vk.com/dev/friends.getMutual and read https://vk.com/dev/execute
 		Возвращает в словаре кортежи с инфой о цели и списком общих друзей с инфой
 		"""
-		def parts(lst, n=25):
-			""" разбиваем список на части - по 25 в каждой """
-			return [lst[i:i + n] for i in iter(range(0, len(lst), n))]
-
 		result = []
-
+		parts = lambda lst, n=25: (lst[i:i + n] for i in iter(range(0, len(lst), n))) # разбиваем список на части - по 25 в каждой
 		for i in parts(list(self.all_friends.keys())):
 			r = requests.get(self.request_url('execute.getMutual',
 							'source=%s&targets=%s' % (self.my_id, ",".join(str(id) for id in i)))).json()['response']
