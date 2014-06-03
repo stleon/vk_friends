@@ -20,7 +20,7 @@ class VkFriends():
 		try:
 			self.token, self.my_id, self.api_v = pargs
 			self.my_name, self.my_last_name, self.photo = self.base_info([self.my_id])
-			self.all_friends = self.friends(self.my_id)
+			self.all_friends, self.count_friends = self.friends(self.my_id)
 		except VkException as error:
 			sys.exit(error)
 
@@ -48,9 +48,8 @@ class VkFriends():
 		# TODO: слишком много полей для всего сразу, город и страна не нужны для нахождения общих друзей
 		r = requests.get(self.request_url('friends.get',
 				'user_id=%s&fields=uid,first_name,last_name,photo,country,city,sex,bdate' % id)).json()['response']
-		self.count_friends = r['count']
 		#r = list(filter((lambda x: 'deactivated' not in x.keys()), r['items']))
-		return {item['id']: item for item in r['items']}
+		return {item['id']: item for item in r['items']}, r['count']
 
 	def common_friends(self):
 		"""
@@ -58,11 +57,11 @@ class VkFriends():
 		Возвращает в словаре кортежи с инфой о цели и списком общих друзей с инфой
 		"""
 		result = []
-		parts = lambda lst, n=25: (lst[i:i + n] for i in iter(range(0, len(lst), n))) # разбиваем список на части - по 25 в каждой
+		# разбиваем список на части - по 25 в каждой
+		parts = lambda lst, n=25: (lst[i:i + n] for i in iter(range(0, len(lst), n)))
 		for i in parts(list(self.all_friends.keys())):
 			r = requests.get(self.request_url('execute.getMutual',
 							'source=%s&targets=%s' % (self.my_id, ",".join(str(id) for id in i)))).json()['response']
-
 			for x, id in enumerate(i):
 				result.append((self.all_friends[int(id)], [self.all_friends[int(i)] for i in r[x]] if r[x] else None))
 
