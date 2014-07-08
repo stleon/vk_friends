@@ -76,21 +76,17 @@ class VkFriends():
 		result = {}
 
 		def fill_result(friends):
-
 			for i in VkFriends.parts(friends):
-				r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' %
-																		VkFriends.make_targets(i))).json()['response']
+				r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' % VkFriends.make_targets(i))).json()['response']
 				for x, id in enumerate(i):
-					result[id] = r[x]["items"] if r[x] else None
+					result[id] = tuple(r[x]["items"]) if r[x] else None
 
 		for i in range(deep):
 			if result:
-				# те айди, которых нет в ключах
-				friends = list(set(result.keys()) ^ set([item for sublist in result.values() for item in sublist]))
+				# те айди, которых нет в ключах + не берем id:None
+				fill_result(list(set([item for sublist in result.values() if sublist for item in sublist]) - set(result.keys())))
 			else:
-				friends = requests.get(self.request_url('friends.get', 'user_id=%s' %
-																				self.my_id)).json()['response']["items"]
-			fill_result(friends)
+				fill_result(requests.get(self.request_url('friends.get', 'user_id=%s' % self.my_id)).json()['response']["items"])
 
 		return result
 
@@ -130,5 +126,5 @@ if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	#print(a.common_friends())
-	print(len(a.deep_friends(2).keys()))
+	print(a.deep_friends(2))
 	#print(a.from_where_gender())
