@@ -1,7 +1,20 @@
 import sys
+import time
 import requests
-from settings import token, my_id, api_v
+from concurrent.futures import ThreadPoolExecutor
+from settings import token, my_id, api_v, max_workers, delay
 
+def force(f, delay=delay):
+	"""При неудачном запросе сделать паузу и попробовать снова"""
+	def tmp(*args, **kwargs):
+		while True:
+			try:
+				res = f(*args, **kwargs)
+				break
+			except KeyError:
+				time.sleep(delay)
+		return res
+	return tmp
 
 class VkException(Exception):
 	def __init__(self, message):
@@ -20,7 +33,7 @@ class VkFriends():
 
 	def __init__(self, *pargs):
 		try:
-			self.token, self.my_id, self.api_v = pargs
+			self.token, self.my_id, self.api_v, self.max_workers = pargs
 			self.my_name, self.my_last_name, self.photo = self.base_info([self.my_id])
 			self.all_friends, self.count_friends = self.friends(self.my_id)
 		except VkException as error:
@@ -75,11 +88,15 @@ class VkFriends():
 		"""
 		result = {}
 
+		@force
+		def worker(i):	    
+			r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' % VkFriends.make_targets(i))).json()['response']
+			for x, id in enumerate(i):
+				result[id] = tuple(r[x]["items"]) if r[x] else None
+
 		def fill_result(friends):
-			for i in VkFriends.parts(friends):
-				r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' % VkFriends.make_targets(i))).json()['response']
-				for x, id in enumerate(i):
-					result[id] = tuple(r[x]["items"]) if r[x] else None
+			with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
+			    [pool.submit(worker, i) for i in VkFriends.parts(friends)]
 
 		for i in range(deep):
 			if result:
@@ -123,7 +140,7 @@ class VkFriends():
 		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders, bdates
 
 if __name__ == '__main__':
-	a = VkFriends(token, my_id, api_v)
+	a = VkFriends(token, my_id, api_v, max_workers)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	#print(a.common_friends())
 	print(a.deep_friends(2))
