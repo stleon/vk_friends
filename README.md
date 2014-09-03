@@ -28,9 +28,9 @@ https://oauth.vk.com/blank.html#access_token=ACCESS_TOKEN&expires_in=0&user_id=U
 
 ##Дополнительные настройки
 
-max_workers - максимальное количество рабочих потоком при глубинном поиске друзей. 
+**max_workers** - максимальное количество рабочих потоков при глубинном поиске друзей. 
 
-delay - к-во секунд, которое нужно подождать одному из потоков, при неудачном запросе к серверу, перед следующим запросом.
+**delay** - количество секунд, которое нужно подождать одному из потоков, при неудачном запросе к серверу, перед следующим запросом.
 
 ##Что дальше
 
@@ -55,4 +55,5 @@ python 2d3.py
 * Python 3.4
 * [requests](https://github.com/kennethreitz/requests)
 * Mozilla FireFox, так как в Chrome нельзя использовать **XMLHttpRequest** для загрузки локальных файлов (никто не мешает сделать ```python -m http.server 8000```) 
+* [networkx](https://github.com/networkx/networkx)
 

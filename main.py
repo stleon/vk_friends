@@ -1,6 +1,7 @@
 import sys
 import time
 import requests
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 from settings import token, my_id, api_v, max_workers, delay
 
@@ -96,7 +97,7 @@ class VkFriends():
 
 		def fill_result(friends):
 			with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
-			    [pool.submit(worker, i) for i in VkFriends.parts(friends)]
+				[pool.submit(worker, i) for i in VkFriends.parts(friends)]
 
 		for i in range(deep):
 			if result:
@@ -139,9 +140,19 @@ class VkFriends():
 
 		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders, bdates
 
+	@staticmethod
+	def save_load_deep_friends(myfile, sv, dct=None):
+		if sv and dct:
+			pickle.dump(dct, open(myfile, "wb"))
+		else:
+			return pickle.load(open(myfile, "rb"))
+
 if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v, max_workers)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	#print(a.common_friends())
-	print(a.deep_friends(2))
+	df = a.deep_friends(1)
+	print(df)
+	VkFriends.save_load_deep_friends('deep_friends_dct', True, df)
+	#print(pickle.load( open('deep_friends_dct', "rb" )))
 	#print(a.from_where_gender())
