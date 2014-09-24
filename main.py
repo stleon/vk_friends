@@ -3,7 +3,7 @@ import time
 import requests
 import pickle
 from concurrent.futures import ThreadPoolExecutor
-from settings import token, my_id, api_v, max_workers, delay
+from settings import token, my_id, api_v, max_workers, delay, deep
 
 def force(f, delay=delay):
 	"""При неудачном запросе сделать паузу и попробовать снова"""
@@ -141,9 +141,9 @@ class VkFriends():
 		return (calculate(locations[0], all[0]), calculate(locations[1], all[1])), genders, bdates
 
 	@staticmethod
-	def save_load_deep_friends(myfile, sv, dct=None):
-		if sv and dct:
-			pickle.dump(dct, open(myfile, "wb"))
+	def save_load_deep_friends(myfile, sv, smth=None):
+		if sv and smth:
+			pickle.dump(smth, open(myfile, "wb"))
 		else:
 			return pickle.load(open(myfile, "rb"))
 
@@ -151,7 +151,7 @@ if __name__ == '__main__':
 	a = VkFriends(token, my_id, api_v, max_workers)
 	print(a.my_name, a.my_last_name, a.my_id, a.photo)
 	#print(a.common_friends())
-	df = a.deep_friends(1)
+	df = a.deep_friends(deep)
 	print(df)
 	VkFriends.save_load_deep_friends('deep_friends_dct', True, df)
 	#print(pickle.load( open('deep_friends_dct', "rb" )))
