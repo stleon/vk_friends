@@ -40,10 +40,16 @@ class VkFriends():
 		except VkException as error:
 			sys.exit(error)
 
-	def request_url(self, method_name, parameters):
+	def request_url(self, method_name, parameters, access_token=False):
 		"""read https://vk.com/dev/api_requests"""
-		return 'https://api.vk.com/method/{method_name}?{parameters}&v={api_v}&access_token={token}'.format(
-			method_name=method_name, api_v=self.api_v, parameters=parameters, token=self.token)
+
+		req_url = 'https://api.vk.com/method/{method_name}?{parameters}&v={api_v}'.format(
+			method_name=method_name, api_v=self.api_v, parameters=parameters)
+
+		if access_token:
+			req_url = '{}&access_token={token}'.format(req_url, token=self.token)
+
+		return req_url
 
 	def base_info(self, ids):
 		"""read https://vk.com/dev/users.get"""
@@ -76,7 +82,7 @@ class VkFriends():
 		# разбиваем список на части - по 25 в каждой
 		for i in VkFriends.parts(list(self.all_friends.keys())):
 			r = requests.get(self.request_url('execute.getMutual',
-							'source=%s&targets=%s' % (self.my_id, VkFriends.make_targets(i)))).json()['response']
+							'source=%s&targets=%s' % (self.my_id, VkFriends.make_targets(i)), access_token=True)).json()['response']
 			for x, id in enumerate(i):
 				result.append((self.all_friends[int(id)], [self.all_friends[int(i)] for i in r[x]] if r[x] else None))
 
@@ -91,7 +97,7 @@ class VkFriends():
 
 		@force
 		def worker(i):	    
-			r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' % VkFriends.make_targets(i))).json()['response']
+			r = requests.get(self.request_url('execute.deepFriends', 'targets=%s' % VkFriends.make_targets(i), access_token=True)).json()['response']
 			for x, id in enumerate(i):
 				result[id] = tuple(r[x]["items"]) if r[x] else None
 
@@ -104,7 +110,7 @@ class VkFriends():
 				# те айди, которых нет в ключах + не берем id:None
 				fill_result(list(set([item for sublist in result.values() if sublist for item in sublist]) - set(result.keys())))
 			else:
-				fill_result(requests.get(self.request_url('friends.get', 'user_id=%s' % self.my_id)).json()['response']["items"])
+				fill_result(requests.get(self.request_url('friends.get', 'user_id=%s' % self.my_id, access_token=True)).json()['response']["items"])
 
 		return result
 
