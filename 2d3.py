@@ -1,6 +1,6 @@
 import json
 from main import VkFriends
-from settings import token, my_id, api_v
+from settings import token, my_id, api_v, max_workers, delay, deep
 
 
 class D3(VkFriends):
@@ -20,8 +20,8 @@ class D3(VkFriends):
 	target - Myriel, source 1 - Napoleon
 	"""
 
-	def __init__(self, token, my_id, api_v):
-		VkFriends.__init__(self, token, my_id, api_v)
+	def __init__(self, token, my_id, api_v, max_workers):
+		VkFriends.__init__(self, token, my_id, api_v, max_workers)
 		self.friendships = self.common_friends()
 		self.js = {"nodes": [], "links": []}
 		self.write_json(self.to_json())
@@ -54,4 +54,4 @@ class D3(VkFriends):
 			f.write(json)
 
 if __name__ == '__main__':
-	a = D3(token, my_id, api_v)
+	a = D3(token, my_id, api_v, max_workers)
