@@ -1,7 +1,15 @@
 vk_friends
 ==========
 
-Граф дружеских связей в vk.com. Больше инфы можно прочитать [здесь](http://habrahabr.ru/post/221251/)
+Граф дружеских связей в vk.com. Больше инфы можно прочитать [здесь](http://habrahabr.ru/post/221251/) и [здесь](http://habrahabr.ru/post/N/). Если вам нужен старый релиз, то он [тут](https://github.com/stleon/vk_friends/releases/tag/v1.0.0). Перед тем, как что-то делать, рекомендую прочесть всю документацию.
+
+##Что нужно
+
+* Python 3.4
+* [requests](https://github.com/kennethreitz/requests)
+* [RabbitMQ](http://www.rabbitmq.com)
+* [Celery](http://www.celeryproject.org)
+* [networkx](https://github.com/networkx/networkx)
 
 ##Первые шаги
 
@@ -22,38 +30,68 @@ https://oauth.vk.com/blank.html#access_token=ACCESS_TOKEN&expires_in=0&user_id=U
 Далее переходим по ссылке **https://vk.com/editapp?id=IDприложения&section=functions** и создаем хранимую процедуру **getMutual**.
 Копируем содержимое **execute_getMutual.js** в форму и сохраняем.
 
-Если хотим поэксперементировать с получением глубинного списка друзей (друзья-друзей и т.д.), то проделываем те же самые действия с **execute_deepFriends.js**, назвав хранимую процедуру **deepFriends**.
+Для получения глубинного списка друзей (друзья-друзей и т.д.) проделываем те же самые действия с **execute_deepFriends.js**, назвав хранимую процедуру **deepFriends**.
 
 Ура!
 
-##Дополнительные настройки
+##RabbitMQ & Celery
 
-**max_workers** - максимальное количество рабочих потоков при глубинном поиске друзей. 
+После их установки необходимо создать **virtual host** для **RabbitMQ**:
 
-**delay** - количество секунд, которое нужно подождать одному из потоков, при неудачном запросе к серверу, перед следующим запросом.
+```
+rabbitmqctl add_vhost vk_friends
+rabbitmqctl add_user user password
+rabbitmqctl set_permissions -p vk_friends user ".*" ".*" ".*"
+```
+
+Далее в конфигурационном файле **RabbitMQ** (у меня это /usr/local/etc/rabbitmq/rabbitmq-env.conf) указать ip, на котором он установлен:
+
+```
+NODE_IP_ADDRESS=192.168.1.14 // example
+```
+
+В **settings.py** заполнить:
+
+**broker/backend** - словари, содержащие информацию для доступа к брокеру и бэкенду
+
+в соответствии с данными, введенными выше.
 
 ##Что дальше
 
-Если просто хочется посмотреть свой список друзей и общих с ними друзей, переходим в каталог с кодом и запускаем:
+Запускаем **RabbitMQ**:
 
 ```
-python main.py
+rabbitmq-server
 ```
 
-Если хочется этот список визуализировать:
+Затем воркера (из папки проекта):
 
 ```
-python 2d3.py
+celery -A tasks worker --loglevel=info
 ```
-Затем папке **web** (использовался код [d3](https://github.com/mbostock/d3) для представления графа) открываем **index.html** в браузере и наслаждаемся. [Скриншот](https://db.tt/8Jw8cx9I)
+
+Воркеров может быть несколько.
+
+Если вы все настроили правильно и нет никаких сообщений об ошибках, то:
+
+```
+python call.py
+```
+
+1 - Общие друзья, 2 - Друзья-друзей и тд, в зависимости от глубины (**deep** - в **settings.py**).
+
+После первого запуска результат сохраняется в файлах **_dct**. Теперь можно рисовать/анализировать графы. По-умолчанию, **graph.py** работает с "глубинными друзьями". После запуска 
+
+```
+python graph.py
+```
+
+вы увидите некоторую информацию о графе, а в папке проекта появится файл **.png**. Для болиших графов рекомендую закомментировать строчку 
+
+```
+deep_friends.draw_graph()
+```
 
 ##Полезности
 В **settings.py** можете вбить **id** любого интересующего вас человека.
-
-##Что нужно
-
-* Python 3.4
-* [requests](https://github.com/kennethreitz/requests)
-* Mozilla FireFox, так как в Chrome нельзя использовать **XMLHttpRequest** для загрузки локальных файлов (никто не мешает сделать ```python -m http.server 8000```) 
-* [networkx](https://github.com/networkx/networkx)
 
