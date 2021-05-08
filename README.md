@@ -3,7 +3,7 @@ vk_friends
 
 Граф дружеских связей в vk.com. Больше инфы можно прочитать [здесь](http://habrahabr.ru/post/221251/) и [здесь](http://habrahabr.ru/post/243229/). Если вам нужен старый релиз, то он [тут](https://github.com/stleon/vk_friends/releases/tag/v1.0.0). Перед тем, как что-то делать, рекомендую прочесть всю документацию.
 
-##Что нужно
+## Что нужно
 
 * Python 3.4
 * [requests](https://github.com/kennethreitz/requests)
@@ -11,7 +11,7 @@ vk_friends
 * [Celery](http://www.celeryproject.org)
 * [networkx](https://github.com/networkx/networkx)
 
-##Первые шаги
+## Первые шаги
 
 Для начала необходимо создать [Standalone-приложение](https://vk.com/dev/standalone) в VK. Делается это [там](https://vk.com/editapp?act=create). В итоге попросят ввести код-подтверждения, высланный на мобильный, после чего мы попадаем на страницу управления приложением. На вкладке **Настройки** нам пригодится **ID приложения** для получения **access_token**. 
 
@@ -34,7 +34,7 @@ https://oauth.vk.com/blank.html#access_token=ACCESS_TOKEN&expires_in=0&user_id=U
 
 Ура!
 
-##RabbitMQ & Celery
+## RabbitMQ & Celery
 
 После их установки необходимо создать **virtual host** для **RabbitMQ**:
 
@@ -56,7 +56,7 @@ NODE_IP_ADDRESS=192.168.1.14 // example
 
 в соответствии с данными, введенными выше.
 
-##Что дальше
+## Что дальше
 
 Запускаем **RabbitMQ**:
 
@@ -92,6 +92,6 @@ python graph.py
 deep_friends.draw_graph()
 ```
 
-##Полезности
+## Полезности
 В **settings.py** можете вбить **id** любого интересующего вас человека.
 
